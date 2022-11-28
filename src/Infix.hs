@@ -23,7 +23,7 @@ parseExpr :: Parser Expr
 parseExpr = parseSum
 
 parseSum :: Parser Expr
-parseSum = leftAssoc toBinOp <$> list parseMult (plus <|> minus)
+parseSum = (leftAssoc toBinOp) <$> (list parseMult (plus <|> minus))
 
 parseMult :: Parser Expr
 parseMult = leftAssoc toBinOp <$> list parsePow (star <|> division)

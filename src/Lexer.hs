@@ -12,6 +12,7 @@ lbr = char '('
 rbr :: Parser Char
 rbr = char ')'
 
+-- Returns function (Parser) that when meets +, bites it and returns Just (remainders, plus)
 plus :: Parser Op
 plus = char '+' $> Plus
 
