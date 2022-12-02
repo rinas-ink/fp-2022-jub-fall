@@ -1,19 +1,37 @@
 module Parser where
 
-import Expr
-import qualified Infix
-import qualified Prefix
-import Data.Char (isSpace)
+import Text.Megaparsec
+import Text.Megaparsec.Char
+import Data.Void
+import Data.Char
 
-data ParserType = Prefix | Infix deriving (Show)
+import Lambda
 
-parse :: ParserType -> String -> Maybe Expr
-parse pType str =
-    case go pType str of
-      Just (str, e) | null (trim str)  -> Just e
-      _ -> Nothing
-  where
-    go Prefix = Prefix.parse
-    go Infix  = Infix.parse
+type Parser = Parsec Void String
 
-    trim = dropWhile isSpace
+parseToken :: Parser String
+parseToken = space *> some (satisfy isAlpha) <* space
+
+parseVar :: Parser (Lambda String)
+parseVar = Var <$> parseToken
+
+parseInBrac :: Parser (Lambda String)
+parseInBrac = char '(' *> parseTerm <*  char ')'
+
+parseAbs :: Parser (Lambda String)
+parseAbs = Abs <$> (char '\\' *> parseToken) <*> (char '.' *> parseTerm)
+
+parseApp :: Parser (Lambda String)
+parseApp = do
+  x <- parseVar <|> parseInBrac
+  _ <- space
+  others <- (parseVar <|> parseInBrac <|> parseAbs) `sepEndBy` space
+  return (apply (x:others)) where
+    apply [x] = x
+    apply (x:y:others) = apply (App x y : others)
+    -- don't need case for [], as always call with at least `x`
+
+parseTerm :: Parser (Lambda String)
+parseTerm = space *> (try parseApp <|> try parseInBrac <|> try parseAbs <|> try parseVar) <* space
+
+
